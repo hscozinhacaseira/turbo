@@ -1,24 +1,27 @@
+```markdown
 # Projeto: Agente de Vendas Nível 1 - MDTURBOS
 
-Este repositório contém a interface (index.html) e um exemplo de backend em Google Apps Script (Code.gs) para um agente de vendas N1 que automatiza o primeiro atendimento.
+Este repositório contém um frontend (index.html) e integração esperada com um backend (ex.: Google Apps Script) para um agente de vendas N1 que automatiza o primeiro atendimento.
 
-## Estrutura necessária nas Planilhas (Google Sheets)
+Principais arquivos
+- index.html — Interface do agente (suporta execução em Google Apps Script e também como página estática que carrega um CSV).
+- ESTOQUE.csv — Planilha de estoque (padrão ponto-e-vírgula).
+- scripts/ (opcional) — scripts de limpeza/normalização do CSV (se necessário).
 
-1. Planilha "Estoque" (obrigatória)
-   - Primeira linha: cabeçalhos
-   - Colunas esperadas (nomes exatos recomendados):
-     - ID_Produto
-     - Nome_Produto
-     - PN_Alternativos
-     - Modelos
-     - Medidas
-     - Estoque
-   - O campo `Estoque` deve conter número (0, 1, 10, ...).
+Formato esperado da planilha de estoque (ESTOQUE.csv)
+- Separador: ponto-e-vírgula (;)
+- Cabeçalho (exatamente estas colunas, nesta ordem recomendada):
+  - Nome_Produto
+  - PN_Alternativos
+  - Modelos
+  - Medidas
+  - Estoque
 
-2. Planilha "Leads" (será criada automaticamente pelo script se não existir)
-   - Cabeçalho sugerido: created_at, nome, celular, produto_busca, produto_pn, produto_nome, pagamento, status
+Notas sobre conteúdo:
+- A coluna `Estoque` deve conter um número (0, 1, 10, ...). O frontend usa esse valor para decisões de disponibilidade.
+- As colunas `Modelos` e `Medidas` são livres (texto) e podem conter vírgulas e barras. Não são convertidas automaticamente em tipos numéricos.
 
-## Contrato entre frontend (index.html) e backend (Apps Script)
+Contrato entre frontend (index.html) e backend (Apps Script)
 - searchStock(term)
   - Entrada: string (termo de busca)
   - Saída: array de objetos com chaves:
@@ -26,28 +29,22 @@ Este repositório contém a interface (index.html) e um exemplo de backend em Go
     - PN_Alternativos (string)
     - Modelos (string)
     - Medidas (string)
-    - Estoque (number)
-
+    - Estoque (number ou string numérico)
 - createLead(payload)
   - Entrada: objeto com chaves: nome, celular, produto_busca, produto_pn, produto_nome, pagamento, status
   - Saída: objeto { ok: true } em caso de sucesso
 
-## Deploy (Google Apps Script)
-1. Crie um novo projeto em Google Apps Script e cole `Code.gs` e o HTML (`index.html`) com o mesmo nome usado em doGet.
-2. Em "Publicar" -> "Deploy as web app" (ou botão Deploy > New deployment):
-   - Execute como: "Me"
-   - Acesso: escolher de acordo com necessidade (ex.: "Anyone" para acesso público)
-3. Se optar por hospedar fora do Apps Script, substitua chamadas `google.script.run` por `fetch()` para o Web App URL e ajuste headers/CORS conforme necessário.
+Sobre hospedagem
+- Apps Script: se for usar HtmlService e google.script.run, o index.html funciona integrado ao servidor do Apps Script.
+- Hospedagem estática (GitHub Pages): o index.html agora detecta se `google.script.run` existe; caso não exista, carrega ESTOQUE.csv local (ou via endpoint) usando fetch(). Garanta que ESTOQUE_limpo.csv esteja disponível no mesmo diretório público.
 
-## Observações e boas práticas
-- Valide dados antes de gravar no sheet (ex.: formato de telefone).
-- Log de erros no Apps Script ajuda a diagnosticar problemas (Use `console.error` que aparece em Executions).
-- Se for expor o Web App publicamente, avalie autenticação e limites de escrita na planilha.
+Boas práticas
+- Mantenha sempre uma cópia original do CSV antes de limpar.
+- Valide o campo `Estoque` quando usar dados para vendas (caso haja formatação não padronizada).
+- Para deploy público de Web App com escrita (ex.: createLead), proteja endpoints e revise permissões.
 
-## Exemplo de fluxo
-1. Front pergunta nome -> grava localmente.
-2. Pergunta celular -> grava.
-3. Pergunta termo do produto -> chama `searchStock(term)`.
-4. Se múltiplos resultados -> lista e permite seleção.
-5. Ao confirmar orçamento -> chama `createLead` com os dados finais.
+Exemplo rápido (local)
+- Abrir index.html (ou rodar `python3 -m http.server` e acessar http://localhost:8000).
+- Certificar-se que `ESTOQUE_limpo.csv` esteja ao lado do index.html para que a versão estática funcione.
 
+```
