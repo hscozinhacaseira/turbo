@@ -6,102 +6,81 @@
   <title>Assistente de Vendas - MDTURBOS</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-    #chat-container { width:500px; max-width:95%; height:700px; border-radius:15px; box-shadow:0 8px 24px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden; background:#fff; }
-    #chat-header { background:linear-gradient(90deg,#1d3557,#457b9d); color:#fff; padding:20px; text-align:center; font-weight:bold; font-size:1.2em; border-bottom:4px solid #e63946; }
-    #chat-messages { flex-grow:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
-    .message { padding:10px 14px; border-radius:16px; max-width:90%; line-height:1.4; word-wrap:break-word; }
-    .bot-message { background:#e9ecef; color:#333; align-self:flex-start; border-bottom-left-radius:6px; }
-    .bot-message pre { white-space:pre-wrap; font-family:inherit; margin:0; font-size:0.9em; }
-    .user-message { background:#1d3557; color:#fff; align-self:flex-end; border-bottom-right-radius:6px; }
-    #chat-form { display:flex; border-top:1px solid #ddd; padding:10px; }
-    #chat-input { flex-grow:1; border:1px solid #ccc; border-radius:20px; padding:10px 15px; font-size:1em; outline:none; margin-right:10px; }
-    #send-button { background:#e63946; border:none; color:#fff; padding:0 20px; border-radius:20px; font-weight:bold; cursor:pointer; transition:background-color .2s; }
-    #send-button:hover { background:#d62828; }
-    .product-card { background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-top:6px; }
+    :root{--primary:#1d3557;--accent:#e63946;--muted:#666}
+    html,body{height:100%;margin:0}
+    body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:12px; }
+    #chat-container { width:500px; max-width:100%; height:700px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.12); display:flex; flex-direction:column; overflow:hidden; background:#fff; }
+    #chat-header { background:linear-gradient(90deg,var(--primary),#457b9d); color:#fff; padding:16px; text-align:center; font-weight:700; font-size:1.05rem; border-bottom:4px solid var(--accent); }
+    #chat-messages { flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .message { padding:8px 12px; border-radius:14px; max-width:92%; line-height:1.35; word-wrap:break-word; }
+    .bot-message { background:#eef2f6; color:#111; align-self:flex-start; border-bottom-left-radius:6px; }
+    .bot-message pre{white-space:pre-wrap;margin:0;font-family:inherit;font-size:0.92rem}
+    .user-message { background:var(--primary); color:#fff; align-self:flex-end; border-bottom-right-radius:6px; }
+    #chat-form { display:flex; border-top:1px solid #eee; padding:10px; gap:8px; }
+    #chat-input { flex:1; border:1px solid #ddd; border-radius:20px; padding:10px 14px; font-size:1rem; outline:none; }
+    #send-button { background:var(--accent); border:none; color:#fff; padding:0 14px; border-radius:20px; font-weight:700; cursor:pointer; }
+    .product-card { background:#fff; border:1px solid #e6e6e6; padding:10px; border-radius:8px; margin-top:6px; }
     .product-actions { margin-top:8px; display:flex; gap:8px; }
     .btn { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }
-    .btn-select { background:#1d3557; color:#fff; }
-    .btn-info { background:#f0f0f0; color:#333; }
-    .spinner { display:inline-block; width:16px; height:16px; border:3px solid rgba(0,0,0,0.08); border-left-color:#1d3557; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; }
+    .btn-select { background:var(--primary); color:#fff; }
+    .btn-info { background:#f6f6f6; color:#333; }
+    .spinner { display:inline-block; width:16px; height:16px; border:3px solid rgba(0,0,0,0.08); border-left-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    .muted { color:#666; font-size:0.95em; }
+    .muted { color:var(--muted); font-size:0.95rem; }
+    /* responsive */
+    @media (max-width:420px){ #chat-container{height:92vh} }
   </style>
 </head>
 <body>
-  <div id="chat-container">
-    <div id="chat-header">Agente de Vendas N1 MDTURBOS</div>
-    <div id="chat-messages" aria-live="polite"></div>
-    <form id="chat-form">
-      <input id="chat-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off" autofocus />
+  <div id="chat-container" role="application" aria-label="Assistente de vendas MDTURBOS">
+    <div id="chat-header">Agente de Vendas N1 — MDTURBOS</div>
+    <div id="chat-messages" aria-live="polite" aria-atomic="false"></div>
+    <form id="chat-form" autocomplete="off">
+      <input id="chat-input" type="text" placeholder="Digite sua mensagem..." />
       <button id="send-button" type="submit">Enviar</button>
     </form>
   </div>
 
   <script>
-    // Este HTML é pensado para ser servido pelo Google Apps Script (HtmlService).
-    // Usa google.script.run para chamadas ao backend: searchStock(q) e createLead(payload)
-    // Se você preferir hospedar externamente, substitua as chamadas por fetch() para o Web App URL.
-
+    // Modo de execução: Apps Script (google.script.run) OR estático (fetch CSV).
+    const isAppsScript = typeof google !== 'undefined' && typeof google.script !== 'undefined' && typeof google.script.run === 'function';
+    const CSV_PATH = 'ESTOQUE_limpo.csv'; // para hospedagem estática
+    const chatMessages = document.getElementById('chat-messages');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
-    const chatMessages = document.getElementById('chat-messages');
 
     let conversationState = 'START';
     let lastFoundProducts = [];
     const userData = { nome:'', celular:'', produto:null };
 
-    function displayMessage(text, sender='bot', isHtml=false) {
-      const el = document.createElement('div');
-      el.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
-      if (isHtml) el.innerHTML = text; else el.innerText = text;
-      chatMessages.appendChild(el);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+    function el(text, cls='bot-message') {
+      const d = document.createElement('div'); d.className = 'message ' + cls; d.textContent = text; return d;
+    }
+    function htmlEl(html, cls='bot-message') {
+      const d = document.createElement('div'); d.className = 'message ' + cls; d.innerHTML = html; return d;
+    }
+    function botSay(text, isHtml=false) {
+      const node = isHtml ? htmlEl(text, 'bot-message') : el(text, 'bot-message');
+      chatMessages.appendChild(node); chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    function userSay(text) {
+      const node = el(text, 'user-message'); chatMessages.appendChild(node); chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function displayProductList(products) {
-      // products: array of objects
-      products.forEach((p, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'bot-message message';
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        const title = document.createElement('strong');
-        title.innerText = `${idx + 1}. ${p.Nome_Produto}`;
-        const pre = document.createElement('pre');
-        pre.innerText = `PN: ${p.PN_Alternativos}\nModelo: ${p.Modelos}\nMedidas: ${p.Medidas}\nEstoque: ${p.Estoque}`;
-        const actions = document.createElement('div');
-        actions.className = 'product-actions';
-        const btnSelect = document.createElement('button');
-        btnSelect.type = 'button';
-        btnSelect.className = 'btn btn-select';
-        btnSelect.innerText = 'Selecionar';
-        btnSelect.addEventListener('click', () => { processProductSelection(p); });
-        const btnInfo = document.createElement('button');
-        btnInfo.type = 'button';
-        btnInfo.className = 'btn btn-info';
-        btnInfo.innerText = 'Ver mais';
-        btnInfo.addEventListener('click', () => {
-          displayMessage(JSON.stringify(p, null, 2), 'bot', false);
-        });
-        actions.appendChild(btnSelect);
-        actions.appendChild(btnInfo);
-        card.appendChild(title);
-        card.appendChild(pre);
-        card.appendChild(actions);
-        wrapper.appendChild(card);
-        chatMessages.appendChild(wrapper);
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    function botSay(text, isHtml=false) { displayMessage(text, 'bot', isHtml); }
-
-    function displayFinalRemarks() {
-      botSay("Obrigado! Antes de finalizar, seguem umas dicas importantes:");
-      botSay("1. Modelos: Turbinas eletrônicas são peças complexas. Confirme sempre a aplicação correta.");
-      botSay("2. Verificação: Confirme o código original do veículo na plaqueta da turbina.");
-      botSay("3. Instalação: A troca exige conhecimento e balanceamento. Recomendo instalação profissional.");
+    function renderProductCard(p, idx) {
+      const wrap = document.createElement('div'); wrap.className = 'bot-message';
+      const card = document.createElement('div'); card.className = 'product-card';
+      const title = document.createElement('strong'); title.textContent = `${idx+1}. ${p.Nome_Produto}`;
+      const pre = document.createElement('pre'); pre.textContent = `PN: ${p.PN_Alternativos}\nModelo: ${p.Modelos}\nMedidas: ${p.Medidas}\nEstoque: ${p.Estoque}`;
+      const actions = document.createElement('div'); actions.className = 'product-actions';
+      const btnSelect = document.createElement('button'); btnSelect.type='button'; btnSelect.className='btn btn-select'; btnSelect.textContent='Selecionar';
+      btnSelect.addEventListener('click', ()=> processProductSelection(p));
+      const btnInfo = document.createElement('button'); btnInfo.type='button'; btnInfo.className='btn btn-info'; btnInfo.textContent='Ver mais';
+      btnInfo.addEventListener('click', ()=> { botSay(JSON.stringify(p, null, 2)); });
+      actions.appendChild(btnSelect); actions.appendChild(btnInfo);
+      card.appendChild(title); card.appendChild(pre); card.appendChild(actions);
+      wrap.appendChild(card);
+      chatMessages.appendChild(wrap); chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function processProductSelection(product) {
@@ -116,166 +95,121 @@
       }
     }
 
-    function setLoading(flag) {
-      if (flag) {
-        const el = document.createElement('div');
-        el.id = '__loading__';
-        el.className = 'bot-message message';
-        el.innerHTML = 'Buscando <span class="spinner"></span>';
-        chatMessages.appendChild(el);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    function showLoading() {
+      const id = '__loading__';
+      if (!document.getElementById(id)) {
+        const n = htmlEl('Buscando <span class="spinner" aria-hidden="true"></span>');
+        n.id = id; chatMessages.appendChild(n); chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+    function hideLoading() { const el = document.getElementById('__loading__'); if (el) el.remove(); }
+
+    // Mecanismo de busca: usa google.script.run se disponível; senão, carrega CSV local/endpoint
+    async function searchProductsRemote(term) {
+      if (isAppsScript) {
+        return new Promise((resolve, reject) => {
+          showLoading();
+          google.script.run.withSuccessHandler(results => { hideLoading(); resolve(results || []); })
+                         .withFailureHandler(err => { hideLoading(); reject(err); })
+                         .searchStock(term);
+        });
       } else {
-        const el = document.getElementById('__loading__');
-        if (el) el.remove();
+        // Busca em CSV local e faz filtro simples
+        showLoading();
+        try {
+          const res = await fetch(CSV_PATH);
+          if (!res.ok) throw new Error('Falha ao carregar CSV: ' + res.status);
+          const txt = await res.text();
+          hideLoading();
+          const parsed = parseCSV(txt); // retorna array de objetos
+          const q = term.trim().toLowerCase();
+          const results = parsed.filter(row => {
+            return [row.Nome_Produto, row.PN_Alternativos, row.Modelos, row.Medidas].join(' ').toLowerCase().includes(q);
+          });
+          return results;
+        } catch (err) {
+          hideLoading();
+          console.error(err);
+          return [];
+        }
       }
     }
 
-    // Chama a função server-side searchStock via google.script.run
-    function searchProducts(term) {
-      return new Promise((resolve, reject) => {
-        setLoading(true);
-        google.script.run
-          .withSuccessHandler(results => { setLoading(false); resolve(results || []); })
-          .withFailureHandler(err => { setLoading(false); reject(err); })
-          .searchStock(term);
-      });
+    async function createLeadRemote(payload) {
+      if (isAppsScript) {
+        return new Promise((resolve, reject) => {
+          google.script.run.withSuccessHandler(res=>resolve(res)).withFailureHandler(err=>reject(err)).createLead(payload);
+        });
+      } else {
+        // Em hospedagem estática não temos escrita por padrão — retorna falso/ok para frontend
+        return { ok: false, info: 'Hospedagem estática: createLead não disponível' };
+      }
     }
 
-    // Cria bilhete/lead no backend (escreve em folha 'Leads' ou similar)
-    function createLead(payload) {
-      return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(res => resolve(res))
-          .withFailureHandler(err => reject(err))
-          .createLead(payload);
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+      if (lines.length === 0) return [];
+      const header = lines[0].split(';').map(h=>h.trim());
+      const rows = lines.slice(1).map(l => {
+        const cells = l.split(';').map(c=>c.trim());
+        const obj = {};
+        for (let i=0;i<header.length;i++) obj[header[i] || ('col'+i)] = cells[i] || '';
+        return obj;
       });
+      return rows;
     }
 
     async function processInput(input) {
-      displayMessage(input, 'user');
+      userSay(input);
       chatInput.value = '';
-
       switch (conversationState) {
         case 'START':
-          userData.nome = input;
-          botSay(`Prazer, ${userData.nome}! Para agilizar, qual seu celular com DDD?`);
-          conversationState = 'GET_CELULAR';
-          break;
-
+          userData.nome = input; botSay(`Prazer, ${userData.nome}! Para agilizar, qual seu celular com DDD?`); conversationState='GET_CELULAR'; break;
         case 'GET_CELULAR':
-          userData.celular = input;
-          botSay('Obrigado! Do que você precisa hoje? Pode me dizer o nome, PN ou modelo do veículo.');
-          conversationState = 'GET_PRODUCT';
-          break;
-
+          userData.celular = input; botSay('Obrigado! Do que você precisa hoje? Diga o nome, PN ou modelo.'); conversationState='GET_PRODUCT'; break;
         case 'GET_PRODUCT':
           botSay('Buscando...');
           try {
-            const results = await searchProducts(input);
+            const results = await searchProductsRemote(input);
             if (!results || results.length === 0) {
-              botSay(`Não encontrei essa peça com "${input}". Vou passar seu contato para um vendedor fazer uma busca mais específica, ok?`);
-              // criar lead automático com termo de busca
-              await createLead({
-                nome: userData.nome,
-                celular: userData.celular,
-                produto_busca: input,
-                produto_pn: '',
-                produto_nome: '',
-                pagamento: '',
-                status: 'Contato requerido - busca manual'
+              botSay(`Não encontrei essa peça com "${input}". Vou criar um bilhete para que um vendedor verifique.` );
+              await createLeadRemote({
+                nome: userData.nome, celular: userData.celular, produto_busca: input, produto_pn:'', produto_nome:'', pagamento:'', status:'Contato requerido - busca manual'
               });
-              displayFinalRemarks();
               conversationState = 'ENDED';
             } else if (results.length === 1) {
-              lastFoundProducts = results;
-              processProductSelection(results[0]);
+              lastFoundProducts = results; processProductSelection(results[0]);
             } else {
-              lastFoundProducts = results;
-              botSay(`Encontrei ${results.length} itens. Veja abaixo e clique em "Selecionar":`);
-              displayProductList(results);
-              conversationState = 'CHOOSE_FROM_LIST';
+              lastFoundProducts = results; botSay(`Encontrei ${results.length} itens. Veja abaixo e clique em "Selecionar":`); results.forEach((p,i)=>renderProductCard(p,i)); conversationState='CHOOSE_FROM_LIST';
             }
-          } catch (err) {
-            console.error(err);
-            botSay('Erro ao consultar o servidor. Tente novamente mais tarde.');
-          }
+          } catch (err) { console.error(err); botSay('Erro ao consultar o servidor.'); }
           break;
-
         case 'CHOOSE_FROM_LIST':
-          const n = parseInt(input, 10);
-          if (!isNaN(n) && n > 0 && n <= lastFoundProducts.length) {
-            processProductSelection(lastFoundProducts[n - 1]);
-          } else {
-            botSay('Por favor, clique em "Selecionar" no produto desejado ou digite o número correto.');
-          }
+          const n = parseInt(input,10);
+          if (!isNaN(n) && n>0 && n<=lastFoundProducts.length) processProductSelection(lastFoundProducts[n-1]); else botSay('Digite o número ou clique em "Selecionar".');
           break;
-
         case 'CONFIRM_ORCAMENTO':
-          if (input.toLowerCase().startsWith('s')) {
-            botSay('Qual a forma de pagamento que prefere (Pix, Cartão, Boleto)?');
-            conversationState = 'GET_PAYMENT';
-          } else {
-            botSay('Sem problemas! Se precisar de outra peça, é só chamar.');
-            conversationState = 'GET_PRODUCT';
-          }
+          if (input.toLowerCase().startsWith('s')) { botSay('Qual a forma de pagamento (Pix, Cartão, Boleto)?'); conversationState='GET_PAYMENT'; }
+          else { botSay('Tudo bem. Se precisar de outra peça, pode me chamar.'); conversationState='GET_PRODUCT'; }
           break;
-
         case 'GET_PAYMENT':
           const pagamento = input;
-          botSay(`Perfeito! Estou criando um bilhete para o vendedor...`);
+          botSay('Criando bilhete para o vendedor...');
           try {
-            await createLead({
-              nome: userData.nome,
-              celular: userData.celular,
-              produto_busca: '',
-              produto_pn: userData.produto.PN_Alternativos || '',
-              produto_nome: userData.produto.Nome_Produto || '',
-              pagamento: pagamento,
-              status: 'Orçamento solicitado'
-            });
-            botSay(`Bilhete criado. Um vendedor entrará em contato pelo número ${userData.celular}.`);
-            displayFinalRemarks();
-            conversationState = 'ENDED';
-          } catch (err) {
-            console.error(err);
-            botSay('Erro ao criar bilhete. Tente novamente ou contate um vendedor.');
-          }
+            await createLeadRemote({ nome:userData.nome, celular:userData.celular, produto_busca:'', produto_pn:userData.produto?.PN_Alternativos||'', produto_nome:userData.produto?.Nome_Produto||'', pagamento, status:'Orçamento solicitado' });
+            botSay(`Bilhete criado. Um vendedor entrará em contato no ${userData.celular}.`);
+            conversationState='ENDED';
+          } catch (err) { console.error(err); botSay('Erro ao criar bilhete.'); }
           break;
-
         case 'FORWARD_TO_SALES':
-          botSay(`Ok! Vou direcionar seu contato para um vendedor. Estou criando o bilhete...`);
-          try {
-            await createLead({
-              nome: userData.nome,
-              celular: userData.celular,
-              produto_busca: userData.produto.Nome_Produto || '',
-              produto_pn: userData.produto.PN_Alternativos || '',
-              produto_nome: userData.produto.Nome_Produto || '',
-              pagamento: '',
-              status: 'Solicitação - verificação de reposição'
-            });
-            botSay(`Pronto. Um vendedor entrará em contato pelo número ${userData.celular}.`);
-            displayFinalRemarks();
-            conversationState = 'ENDED';
-          } catch (err) {
-            console.error(err);
-            botSay('Erro ao criar bilhete. Tente novamente mais tarde.');
-          }
-          break;
-
+          botSay('Direcionando seu contato para um vendedor...'); conversationState='ENDED'; break;
         default:
-          botSay('Se quiser continuar, diga o que precisa.');
-          conversationState = 'GET_PRODUCT';
+          botSay('Se quiser continuar, diga o que precisa.'); conversationState='GET_PRODUCT';
       }
     }
 
-    chatForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (text) processInput(text);
-    });
-
-    // inicia conversa
+    chatForm.addEventListener('submit', e=>{ e.preventDefault(); const t = chatInput.value.trim(); if (t) processInput(t); });
+    // inicia
     botSay('Olá! Sou o assistente de vendas da MD TURBOS. Para começarmos, qual o seu nome?');
   </script>
 </body>
