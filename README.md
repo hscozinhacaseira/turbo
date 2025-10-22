@@ -77,10 +77,10 @@ O agente opera com base no seguinte fluxo de conversa:
 
 A lógica do agente depende de uma planilha (Google Sheets, por exemplo) com a seguinte estrutura:
 
-| ID_Produto | Nome_Produto | PN_Alternativos | Aplicacao_Veiculo_Ano | Estoque | Preco | Link_Info |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| TC_001 | Turbina Master Power .50 | 7001... , 1441... | Scania 113 (1991-1998) | 5 | 2500.00 | [link] |
-| CR_002 | Conjunto Rotativo Hilux 3.0 | 1720... | Toyota Hilux 3.0 (2005-2015) | 0 | 1200.00 | [link] |
-| GV_003 | Geometria Variável Amarok | 03L2... | VW Amarok 2.0 (2010-2016) | 12 | 850.00 | [link] |
-
+Nome_Produto;	PN_Alternativos;	Modelos;	Medidas;
+TOYOTA  RAV4  2.0 D-4D  1CD-FTV - 116HP  2001 - 2005;	BC.0005;	BC GT1749V;	EIXO 36/43 ROTOR 34,65/49
+SCANIA 143/144 (530HP) SCANIA TRUCK 460HP	BC.0007;	BC HX60;	EIXO 92/97 ROTOR 76/109;
+FORD F4000 /F350/ F250 2.8 CUMMINS ISF 2.8 EURO 5 - 4x4 D 2014 A 2017;	BC.0027;	BC HE200WG;	EIXO 44/49 ROTOR 41/58,16;
+CATERPILLAR TRUCK - CT660 - C10/C12; BC.0028;	BC GTA4294;	EIXO 75,1/82 ROTOR 67,73/94;
+GM S10/TROLLER /BLAZER EURO II - M.W.M 4.07 TCA 2.8 - 2002-2005;	BC.0043;	BC TF035HM-12T-6;	EIXO 36,1/43,1 ROTOR 37,8/49
 O sistema (backend) deverá ter acesso de leitura a esta planilha via API para realizar as consultas em tempo real.
