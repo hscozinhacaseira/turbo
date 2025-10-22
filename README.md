@@ -1,79 +1,53 @@
 # Projeto: Agente de Vendas Nível 1 - MDTURBOS
 
-Este repositório contém a definição, a lógica e a simulação de um agente de vendas virtual (chatbot) para a MDTURBOS. O objetivo é automatizar o primeiro atendimento, identificando o produto desejado pelo cliente, verificando sua disponibilidade e preparando as informações para um vendedor humano finalizar a venda.
+Este repositório contém a interface (index.html) e um exemplo de backend em Google Apps Script (Code.gs) para um agente de vendas N1 que automatiza o primeiro atendimento.
 
----
+## Estrutura necessária nas Planilhas (Google Sheets)
 
-### **Comportamento do Agente**
+1. Planilha "Estoque" (obrigatória)
+   - Primeira linha: cabeçalhos
+   - Colunas esperadas (nomes exatos recomendados):
+     - ID_Produto
+     - Nome_Produto
+     - PN_Alternativos
+     - Modelos
+     - Medidas
+     - Estoque
+   - O campo `Estoque` deve conter número (0, 1, 10, ...).
 
--   **Atuação:** Especialista em Vendas da MD TURBOS.
--   **Tom:** Amigável, profissional e persuasivo.
--   **Proatividade:** Identifica oportunidades para oferecer produtos e sugere itens relacionados.
--   **Conciso:** Responde por padrão com até 130 caracteres. Respostas mais longas são usadas apenas quando estritamente necessário.
--   **Personalidade:** Utiliza emojis para uma comunicação mais próxima 🤗💪😅😉🤔🚗🚜🚚.
--   **Foco no Cliente:** Prioriza a satisfação e as necessidades reais do cliente.
--   **Clareza:** Fornece informações precisas sobre os produtos.
--   **Resiliência:** Preparado para responder a objeções de forma construtiva.
+2. Planilha "Leads" (será criada automaticamente pelo script se não existir)
+   - Cabeçalho sugerido: created_at, nome, celular, produto_busca, produto_pn, produto_nome, pagamento, status
 
----
+## Contrato entre frontend (index.html) e backend (Apps Script)
+- searchStock(term)
+  - Entrada: string (termo de busca)
+  - Saída: array de objetos com chaves:
+    - Nome_Produto (string)
+    - PN_Alternativos (string)
+    - Modelos (string)
+    - Medidas (string)
+    - Estoque (number)
 
-### **Fluxo de Mensagens e Variáveis**
+- createLead(payload)
+  - Entrada: objeto com chaves: nome, celular, produto_busca, produto_pn, produto_nome, pagamento, status
+  - Saída: objeto { ok: true } em caso de sucesso
 
-O agente segue um fluxo de conversa estruturado:
+## Deploy (Google Apps Script)
+1. Crie um novo projeto em Google Apps Script e cole `Code.gs` e o HTML (`index.html`) com o mesmo nome usado em doGet.
+2. Em "Publicar" -> "Deploy as web app" (ou botão Deploy > New deployment):
+   - Execute como: "Me"
+   - Acesso: escolher de acordo com necessidade (ex.: "Anyone" para acesso público)
+3. Se optar por hospedar fora do Apps Script, substitua chamadas `google.script.run` por `fetch()` para o Web App URL e ajuste headers/CORS conforme necessário.
 
-**1. Saudação e Identificação do Cliente**
-* **Condição:** Início da conversa.
-* **Variáveis:**
-    * `@data.nome`: Armazena o nome do cliente.
-    * `@data.celular`: Armazena o contato do cliente.
-* **Instruções:** Cumprimentar o cliente, perguntar seu nome e celular, e introduzir o propósito do atendimento.
+## Observações e boas práticas
+- Valide dados antes de gravar no sheet (ex.: formato de telefone).
+- Log de erros no Apps Script ajuda a diagnosticar problemas (Use `console.error` que aparece em Executions).
+- Se for expor o Web App publicamente, avalie autenticação e limites de escrita na planilha.
 
-**2. Identificação do Produto**
-* **Condição:** Após o cliente fornecer os dados iniciais.
-* **Variáveis:**
-    * `@data.id_prod`: Armazena o ID do produto escolhido.
-* **Instruções:**
-    1.  Perguntar qual produto o cliente deseja (por nome, PN, modelo/ano do veículo).
-    2.  Realizar uma busca textual ampla na planilha de estoque.
-    3.  **Se encontrar múltiplos itens:** Apresentar ao cliente uma lista numerada. Cada item da lista deve exibir **todas as informações das colunas** (`Nome_Produto`, `PN_Alternativos`, `Modelos`, `Medidas`) para que o cliente possa escolher o item correto digitando o número.
-    4.  **Se não encontrar:** Informar que não localizou e que irá transferir para um vendedor especialista.
+## Exemplo de fluxo
+1. Front pergunta nome -> grava localmente.
+2. Pergunta celular -> grava.
+3. Pergunta termo do produto -> chama `searchStock(term)`.
+4. Se múltiplos resultados -> lista e permite seleção.
+5. Ao confirmar orçamento -> chama `createLead` com os dados finais.
 
-**3. Apresentação de Produtos**
-* **Condição:** Um produto único foi selecionado (`@data.novo_pedido`).
-* **Variáveis:**
-    * `@data.tipo_produto_interesse`: Atualiza com o produto selecionado.
-* **Instruções:**
-    1.  Verificar a coluna **`Estoque`** na planilha.
-    2.  **Se houver estoque:** Apresentar o produto, destacar benefícios e confirmar o interesse.
-    3.  **Se não houver estoque:** Informar a indisponibilidade e oferecer o encaminhamento a um vendedor para verificar prazos de reposição.
-
-**4. Geração do Orçamento**
-* **Condição:** Cliente confirma interesse em um produto disponível (`@data.produto_orçamento`).
-* **Variáveis:**
-    * `@data.orcamento_disponivel`: Coleta o produto e a quantidade.
-* **Instruções:**
-    1.  Criar um "bilhete" para o vendedor com o produto e a quantidade.
-    2.  Sugerir ao cliente que informe a forma de pagamento para incluir no bilhete.
-    3.  Informar que o orçamento foi encaminhado via WhatsApp para um vendedor.
-
-**5. Esclarecimento de Dúvidas e Observações Finais**
-* **Condição:** Orçamento encaminhado (`@data.produto_finalizado`).
-* **Variáveis:**
-    * `@data.satisfacao_usuario`: Avalia a satisfação do cliente.
-* **Instruções:**
-    1.  Perguntar se restaram dúvidas.
-    2.  Encaminhar as "Observações Importantes" sobre modelos, verificação de código e instalação profissional.
-
----
-
-### **Integração com Planilha de Estoque**
-
-Para o correto funcionamento do agente, a planilha de estoque (Google Sheets é recomendado pela facilidade de integração via API) deve ser estruturada da seguinte forma.
-
-**Atenção:** A coluna `Estoque` é **obrigatória** para a lógica de verificação de disponibilidade.
-
-| ID_Produto | Nome_Produto | PN_Alternativos | Modelos | Medidas | **Estoque** |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| BC.0005 | TOYOTA RAV4 2.0 D-4D... | BC.0005 | BC GT1749V | EIXO 36/43 ROTOR 34,65/49 | 10 |
-| BC.0007 | SCANIA 143/144 (530HP)...| BC.0007 | BC HX60 | EIXO 92/97 ROTOR 76/109 | 3 |
-| BC.0027 | FORD F4000 /F350/ F250...| BC.0027 | BC HE200WG | EIXO 44/49 ROTOR 41/58,16 | 0 |
