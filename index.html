@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente de Vendas N1 - MDTURBOS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #chat-container { width: 400px; max-width: 90%; height: 600px; background-color: #1e1e1e; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; }
+        #chat-header { background-color: #f39c12; color: #1e1e1e; padding: 15px; text-align: center; font-weight: bold; font-size: 1.2em; }
+        #chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; }
+        .bot-message { background-color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .user-message { background-color: #f39c12; color: #1e1e1e; align-self: flex-end; border-bottom-right-radius: 2px; }
+        #chat-form { display: flex; border-top: 1px solid #333; }
+        #chat-input { flex-grow: 1; border: none; background-color: #2c2c2c; color: #e0e0e0; padding: 15px; font-size: 1em; outline: none; }
+        #send-button { background-color: #f39c12; border: none; color: #1e1e1e; padding: 0 20px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
+        #send-button:hover { background-color: #e67e22; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">Agente de Vendas MDTURBOS</div>
+        <div id="chat-messages" id="messages"></div>
+        <form id="chat-form">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." autocomplete="off">
+            <button id="send-button" type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <script>
+        // --- Elementos do DOM ---
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        // --- Estado da Conversa e Dados do Cliente ---
+        let conversationState = 'GREETING';
+        const userData = { nome: '', celular: '' };
+
+        // --- Simulação do Estoque (substituir por uma chamada de API real) ---
+        const fakeStock = [
+            { id: 'CR_002', nome: 'Conjunto Rotativo Hilux 3.0', estoque: 5, info: 'Ótima durabilidade e performance.' },
+            { id: 'GV_003', nome: 'Geometria Variável Amarok', estoque: 0, info: 'Peça essencial para controle do turbo.' },
+            { id: 'TC_001', nome: 'Turbina Master Power .50 Scania 113', estoque: 10, info: 'Potência e confiabilidade para seu caminhão. 🚚' }
+        ];
+
+        // --- Funções Auxiliares ---
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${sender}-message`);
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+
+        function botResponse(message, delay = 500) {
+            setTimeout(() => addMessage(message, 'bot'), delay);
+        }
+
+        // --- Lógica Principal do Agente ---
+        function handleUserInput() {
+            const userText = chatInput.value.trim();
+            if (!userText) return;
+
+            addMessage(userText, 'user');
+            chatInput.value = '';
+
+            switch (conversationState) {
+                case 'GREETING':
+                    userData.nome = userText;
+                    botResponse(`Prazer, ${userData.nome}! 🤗 Agora, pode me informar seu celular com DDD?`);
+                    conversationState = 'GETTING_CELULAR';
+                    break;
+
+                case 'GETTING_CELULAR':
+                    userData.celular = userText;
+                    botResponse(`Obrigado! Do que você precisa hoje? Pode me dizer o nome da peça, o modelo do carro ou o código PN.`);
+                    conversationState = 'GETTING_PRODUCT';
+                    break;
+
+                case 'GETTING_PRODUCT':
+                    const searchTerm = userText.toLowerCase();
+                    const productFound = fakeStock.find(p => p.nome.toLowerCase().includes(searchTerm));
+
+                    if (productFound) {
+                        if (productFound.estoque > 0) {
+                            botResponse(`Encontrei! ${productFound.nome}. ${productFound.info} Temos ${productFound.estoque} unidades. 😉`);
+                            botResponse(`Posso gerar um orçamento para você? (sim/não)`);
+                            conversationState = 'CONFIRM_ORCAMENTO';
+                            userData.produtoDesejado = productFound;
+                        } else {
+                            botResponse(`Encontrei o item: ${productFound.nome}, mas ele está indisponível no momento. 😥`);
+                            botResponse(`Gostaria que um vendedor te avisasse sobre o prazo de chegada?`);
+                            conversationState = 'HANDLE_NO_STOCK';
+                        }
+                    } else {
+                        botResponse(`Não localizei o produto. 🤔 Vou transferir seu contato (${userData.celular}) para um vendedor fazer uma busca detalhada, ok?`);
+                        conversationState = 'ENDED';
+                    }
+                    break;
+
+                case 'CONFIRM_ORCAMENTO':
+                    if (userText.toLowerCase() === 'sim') {
+                        botResponse(`Ótimo! Qual seria a forma de pagamento (ex: Pix, Cartão, Boleto)? Isso agiliza o atendimento.`);
+                        conversationState = 'GETTING_PAYMENT';
+                    } else {
+                        botResponse(`Tudo bem! Se precisar de mais alguma coisa, é só chamar. 💪`);
+                        conversationState = 'GREETING'; // Reinicia
+                    }
+                    break;
+
+                case 'GETTING_PAYMENT':
+                    userData.formaPagamento = userText;
+                    botResponse(`Perfeito! Orçamento enviado para o vendedor: 1x ${userData.produtoDesejado.nome} para ${userData.nome}. Pagamento: ${userData.formaPagamento}.`);
+                    botResponse(`Um vendedor entrará em contato em breve. Restou alguma dúvida?`);
+                    conversationState = 'FINAL_QUESTIONS';
+                    break;
+                
+                case 'FINAL_QUESTIONS':
+                    botResponse(`Obrigado pelo contato! Lembre-se: sempre confirme o código original da peça e procure um profissional qualificado para a instalação. 😉`);
+                    conversationState = 'ENDED';
+                    break;
+                
+                default:
+                    botResponse("Se precisar de ajuda, estou aqui!");
+                    break;
+            }
+        }
+
+        // --- Event Listener ---
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleUserInput();
+        });
+
+        // --- Início da Conversa ---
+        botResponse("Olá! Sou o assistente de vendas da MD TURBOS. Para começarmos, qual o seu nome? 🤗");
+
+    </script>
+</body>
+</html>
