@@ -1,178 +1,280 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente de Vendas - MDTURBOS</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        #chat-container { width: 500px; max-width: 95%; height: 700px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); display: flex; flex-direction: column; overflow: hidden; background-color: #fff; }
-        #chat-header { background: linear-gradient(90deg, #1d3557, #457b9d); color: white; padding: 20px; text-align: center; font-weight: bold; font-size: 1.3em; border-bottom: 4px solid #e63946; }
-        #chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .message { padding: 10px 18px; border-radius: 20px; max-width: 90%; line-height: 1.5; word-wrap: break-word; }
-        .bot-message { background-color: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 5px; }
-        .bot-message pre { white-space: pre-wrap; font-family: inherit; margin: 0; font-size: 0.9em; }
-        .user-message { background-color: #1d3557; color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
-        #chat-form { display: flex; border-top: 1px solid #ddd; padding: 10px; }
-        #chat-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 20px; padding: 10px 15px; font-size: 1em; outline: none; margin-right: 10px; }
-        #send-button { background-color: #e63946; border: none; color: white; padding: 0 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
-        #send-button:hover { background-color: #d62828; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Assistente de Vendas - MDTURBOS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+    #chat-container { width:500px; max-width:95%; height:700px; border-radius:15px; box-shadow:0 8px 24px rgba(0,0,0,0.15); display:flex; flex-direction:column; overflow:hidden; background:#fff; }
+    #chat-header { background:linear-gradient(90deg,#1d3557,#457b9d); color:#fff; padding:20px; text-align:center; font-weight:bold; font-size:1.2em; border-bottom:4px solid #e63946; }
+    #chat-messages { flex-grow:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+    .message { padding:10px 14px; border-radius:16px; max-width:90%; line-height:1.4; word-wrap:break-word; }
+    .bot-message { background:#e9ecef; color:#333; align-self:flex-start; border-bottom-left-radius:6px; }
+    .bot-message pre { white-space:pre-wrap; font-family:inherit; margin:0; font-size:0.9em; }
+    .user-message { background:#1d3557; color:#fff; align-self:flex-end; border-bottom-right-radius:6px; }
+    #chat-form { display:flex; border-top:1px solid #ddd; padding:10px; }
+    #chat-input { flex-grow:1; border:1px solid #ccc; border-radius:20px; padding:10px 15px; font-size:1em; outline:none; margin-right:10px; }
+    #send-button { background:#e63946; border:none; color:#fff; padding:0 20px; border-radius:20px; font-weight:bold; cursor:pointer; transition:background-color .2s; }
+    #send-button:hover { background:#d62828; }
+    .product-card { background:#fff; border:1px solid #ddd; padding:10px; border-radius:8px; margin-top:6px; }
+    .product-actions { margin-top:8px; display:flex; gap:8px; }
+    .btn { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }
+    .btn-select { background:#1d3557; color:#fff; }
+    .btn-info { background:#f0f0f0; color:#333; }
+    .spinner { display:inline-block; width:16px; height:16px; border:3px solid rgba(0,0,0,0.08); border-left-color:#1d3557; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; margin-left:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .muted { color:#666; font-size:0.95em; }
+  </style>
 </head>
 <body>
-
-<div id="chat-container">
+  <div id="chat-container">
     <div id="chat-header">Agente de Vendas N1 MDTURBOS</div>
-    <div id="chat-messages"></div>
+    <div id="chat-messages" aria-live="polite"></div>
     <form id="chat-form">
-        <input type="text" id="chat-input" placeholder="Digite sua mensagem..." autocomplete="off">
-        <button id="send-button" type="submit">Enviar</button>
+      <input id="chat-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off" />
+      <button id="send-button" type="submit">Enviar</button>
     </form>
-</div>
+  </div>
 
-<script>
+  <script>
+    // Este HTML é pensado para ser servido pelo Google Apps Script (HtmlService).
+    // Usa google.script.run para chamadas ao backend: searchStock(q) e createLead(payload)
+    // Se você preferir hospedar externamente, substitua as chamadas por fetch() para o Web App URL.
+
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
 
     let conversationState = 'START';
     let lastFoundProducts = [];
-    const userData = { nome: '', celular: '', produto: null };
+    const userData = { nome:'', celular:'', produto:null };
 
-    // --- SIMULAÇÃO DA PLANILHA DE ESTOQUE ---
-    // Dados extraídos do seu CSV com a adição da coluna 'Estoque' para simulação.
-    const stockDB = [
-        { "Nome_Produto": "TOYOTA RAV4 2.0 D-4D 1CD-FTV - 116HP 2001-2005", "PN_Alternativos": "BC.0005", "Modelos": "BC GT1749V", "Medidas": "EIXO 36/43 ROTOR 34,65/49", "Estoque": 8 },
-        { "Nome_Produto": "SCANIA 143/144 (530HP) SCANIA TRUCK 460HP", "PN_Alternativos": "BC.0007", "Modelos": "BC HX60", "Medidas": "EIXO 92/97 ROTOR 76/109", "Estoque": 3 },
-        { "Nome_Produto": "FORD F4000 /F350/ F250 2.8 CUMMINS ISF 2.8 EURO 5", "PN_Alternativos": "BC.0027", "Modelos": "BC HE200WG", "Medidas": "EIXO 44/49 ROTOR 41/58,16", "Estoque": 0 },
-        { "Nome_Produto": "CATERPILLAR TRUCK - CT660 - C10/C12", "PN_Alternativos": "BC.0028", "Modelos": "BC GTA4294", "Medidas": "EIXO 75,1/82 ROTOR 67,73/94", "Estoque": 5 },
-        { "Nome_Produto": "GM S10/TROLLER /BLAZER EURO II - M.W.M 4.07 TCA 2.8", "PN_Alternativos": "BC.0043", "Modelos": "BC TF035HM-12T-6", "Medidas": "EIXO 36,1/43,1 ROTOR 37,8/49", "Estoque": 15 },
-        { "Nome_Produto": "VW DELIVERY 5140E 8150E 9150E EURO3 2005 ATE 2016", "PN_Alternativos": "BC.0311", "Modelos": "BC K14", "Medidas": "EIXO 41,9/49,9 ROTOR 44,2/62", "Estoque": 11 }
-    ];
-
-    function displayMessage(text, sender, isHtml = false) {
-        const messageEl = document.createElement('div');
-        messageEl.classList.add('message', `${sender}-message`);
-        if (isHtml) {
-            messageEl.innerHTML = text;
-        } else {
-            messageEl.innerText = text;
-        }
-        chatMessages.appendChild(messageEl);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    function displayMessage(text, sender='bot', isHtml=false) {
+      const el = document.createElement('div');
+      el.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
+      if (isHtml) el.innerHTML = text; else el.innerText = text;
+      chatMessages.appendChild(el);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function botSay(text, delay = 600, isHtml = false) {
-        setTimeout(() => displayMessage(text, 'bot', isHtml), delay);
+    function displayProductList(products) {
+      // products: array of objects
+      products.forEach((p, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bot-message message';
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        const title = document.createElement('strong');
+        title.innerText = `${idx + 1}. ${p.Nome_Produto}`;
+        const pre = document.createElement('pre');
+        pre.innerText = `PN: ${p.PN_Alternativos}\nModelo: ${p.Modelos}\nMedidas: ${p.Medidas}\nEstoque: ${p.Estoque}`;
+        const actions = document.createElement('div');
+        actions.className = 'product-actions';
+        const btnSelect = document.createElement('button');
+        btnSelect.className = 'btn btn-select';
+        btnSelect.innerText = 'Selecionar';
+        btnSelect.addEventListener('click', () => { processProductSelection(p); });
+        const btnInfo = document.createElement('button');
+        btnInfo.className = 'btn btn-info';
+        btnInfo.innerText = 'Ver mais';
+        btnInfo.addEventListener('click', () => {
+          displayMessage(JSON.stringify(p, null, 2), 'bot', false);
+        });
+        actions.appendChild(btnSelect);
+        actions.appendChild(btnInfo);
+        card.appendChild(title);
+        card.appendChild(pre);
+        card.appendChild(actions);
+        wrapper.appendChild(card);
+        chatMessages.appendChild(wrapper);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-    
+
+    function botSay(text, isHtml=false) { displayMessage(text, 'bot', isHtml); }
+
     function displayFinalRemarks() {
-        botSay("Obrigado! Antes de finalizar, seguem umas dicas importantes:", 800);
-        botSay("1. Modelos: Turbinas eletrônicas, que podem utilizar geometria variável, são peças complexas. Confirme sempre a aplicação correta.", 1800);
-        botSay("2. Verificação: O ideal é sempre confirmar o código original do seu veículo na plaqueta da turbina para garantir a compra da peça correta.", 2800);
-        botSay("3. Instalação: A troca exige conhecimento especializado e balanceamento. Recomendo que seja feita por um profissional para não perder a garantia. 💪", 3800);
+      botSay("Obrigado! Antes de finalizar, seguem umas dicas importantes:");
+      botSay("1. Modelos: Turbinas eletrônicas são peças complexas. Confirme sempre a aplicação correta.");
+      botSay("2. Verificação: Confirme o código original do veículo na plaqueta da turbina.");
+      botSay("3. Instalação: A troca exige conhecimento e balanceamento. Recomendo instalação profissional.");
     }
 
     function processProductSelection(product) {
-        userData.produto = product;
-        if (product.Estoque > 0) {
-            botSay(`Ótima escolha! O item "${product.Nome_Produto}" está disponível. Temos ${product.Estoque} unidades.`);
-            botSay(`Posso gerar um orçamento para você? (sim/não)`);
-            conversationState = 'CONFIRM_ORCAMENTO';
-        } else {
-            botSay(`O item "${product.Nome_Produto}" está indisponível no momento. 😥 Quer que um vendedor verifique o prazo de reposição para você?`);
-            conversationState = 'FORWARD_TO_SALES';
-        }
-    }
-    
-    function processInput(input) {
-        displayMessage(input, 'user');
-        chatInput.value = '';
-
-        switch (conversationState) {
-            case 'START':
-                userData.nome = input;
-                botSay(`Prazer, ${userData.nome}! 🤗 Para agilizar, qual seu celular com DDD?`);
-                conversationState = 'GET_CELULAR';
-                break;
-
-            case 'GET_CELULAR':
-                userData.celular = input;
-                botSay(`Obrigado! Do que você precisa hoje? Pode me dizer o nome, PN ou modelo do veículo. 🚗`);
-                conversationState = 'GET_PRODUCT';
-                break;
-
-            case 'GET_PRODUCT':
-                const searchTerm = input.toLowerCase();
-                lastFoundProducts = stockDB.filter(p =>
-                    p.Nome_Produto.toLowerCase().includes(searchTerm) ||
-                    p.Modelos.toLowerCase().includes(searchTerm) ||
-                    p.PN_Alternativos.toLowerCase().includes(searchTerm)
-                );
-
-                if (lastFoundProducts.length === 1) {
-                    processProductSelection(lastFoundProducts[0]);
-                } else if (lastFoundProducts.length > 1) {
-                    botSay(`Encontrei ${lastFoundProducts.length} itens. Veja os detalhes abaixo e digite o número do item que você deseja:`);
-                    let productList = '';
-                    lastFoundProducts.forEach((p, index) => {
-                        productList += `<strong>${index + 1}. ${p.Nome_Produto}</strong>\n`;
-                        productList += `<pre>   PN: ${p.PN_Alternativos}\n   Modelo: ${p.Modelos}\n   Medidas: ${p.Medidas}</pre><hr>`;
-                    });
-                    botSay(productList, 800, true);
-                    conversationState = 'CHOOSE_FROM_LIST';
-                } else {
-                    botSay(`Não encontrei essa peça com "${input}". 🤔 Vou passar seu contato para um vendedor fazer uma busca mais específica, ok?`);
-                    displayFinalRemarks();
-                    conversationState = 'ENDED';
-                }
-                break;
-
-            case 'CHOOSE_FROM_LIST':
-                const choice = parseInt(input, 10);
-                if (!isNaN(choice) && choice > 0 && choice <= lastFoundProducts.length) {
-                    const selectedProduct = lastFoundProducts[choice - 1];
-                    processProductSelection(selectedProduct);
-                } else {
-                    botSay("Por favor, digite um número válido da lista acima.");
-                }
-                break;
-            
-            case 'CONFIRM_ORCAMENTO':
-                if (input.toLowerCase().startsWith('s')) {
-                    botSay(`Legal! Para adiantar, qual a forma de pagamento que prefere (Pix, Cartão, Boleto)?`);
-                    conversationState = 'GET_PAYMENT';
-                } else {
-                    botSay('Sem problemas! Se precisar de outra peça, é só chamar. 😉');
-                    conversationState = 'GET_PRODUCT';
-                }
-                break;
-
-            case 'GET_PAYMENT':
-                const pagamento = input;
-                botSay(`Perfeito! Criei um bilhete para o vendedor: 1x ${userData.produto.Nome_Produto}, pgto: ${pagamento}.`);
-                botSay(`Ele entrará em contato com você em breve pelo número ${userData.celular}.`);
-                displayFinalRemarks();
-                conversationState = 'ENDED';
-                break;
-            
-            case 'FORWARD_TO_SALES':
-                 botSay(`Ok! Um de nossos vendedores entrará em contato com você pelo número ${userData.celular} para te ajudar. `);
-                 displayFinalRemarks();
-                 conversationState = 'ENDED';
-                 break;
-        }
+      userData.produto = product;
+      if (product.Estoque > 0) {
+        botSay(`Ótima escolha! O item "${product.Nome_Produto}" está disponível. Temos ${product.Estoque} unidades.`);
+        botSay(`Posso gerar um orçamento para você? (sim/não)`);
+        conversationState = 'CONFIRM_ORCAMENTO';
+      } else {
+        botSay(`O item "${product.Nome_Produto}" está indisponível no momento. Quer que um vendedor verifique prazo de reposição?`);
+        conversationState = 'FORWARD_TO_SALES';
+      }
     }
 
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const userInput = chatInput.value.trim();
-        if (userInput) processInput(userInput);
+    function setLoading(flag) {
+      if (flag) {
+        const el = document.createElement('div');
+        el.id = '__loading__';
+        el.className = 'bot-message message';
+        el.innerHTML = 'Buscando <span class="spinner"></span>';
+        chatMessages.appendChild(el);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } else {
+        const el = document.getElementById('__loading__');
+        if (el) el.remove();
+      }
+    }
+
+    // Chama a função server-side searchStock via google.script.run
+    function searchProducts(term) {
+      return new Promise((resolve, reject) => {
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler(results => { setLoading(false); resolve(results || []); })
+          .withFailureHandler(err => { setLoading(false); reject(err); })
+          .searchStock(term);
+      });
+    }
+
+    // Cria bilhete/lead no backend (escreve em folha 'Leads' ou similar)
+    function createLead(payload) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(res => resolve(res))
+          .withFailureHandler(err => reject(err))
+          .createLead(payload);
+      });
+    }
+
+    async function processInput(input) {
+      displayMessage(input, 'user');
+      chatInput.value = '';
+
+      switch (conversationState) {
+        case 'START':
+          userData.nome = input;
+          botSay(`Prazer, ${userData.nome}! Para agilizar, qual seu celular com DDD?`);
+          conversationState = 'GET_CELULAR';
+          break;
+
+        case 'GET_CELULAR':
+          userData.celular = input;
+          botSay('Obrigado! Do que você precisa hoje? Pode me dizer o nome, PN ou modelo do veículo.');
+          conversationState = 'GET_PRODUCT';
+          break;
+
+        case 'GET_PRODUCT':
+          botSay('Buscando...');
+          try {
+            const results = await searchProducts(input);
+            if (!results || results.length === 0) {
+              botSay(`Não encontrei essa peça com "${input}". Vou passar seu contato para um vendedor fazer uma busca mais específica, ok?`);
+              // criar lead automático com termo de busca
+              await createLead({
+                nome: userData.nome,
+                celular: userData.celular,
+                produto_busca: input,
+                produto_pn: '',
+                produto_nome: '',
+                pagamento: '',
+                status: 'Contato requerido - busca manual'
+              });
+              displayFinalRemarks();
+              conversationState = 'ENDED';
+            } else if (results.length === 1) {
+              lastFoundProducts = results;
+              processProductSelection(results[0]);
+            } else {
+              lastFoundProducts = results;
+              botSay(`Encontrei ${results.length} itens. Veja abaixo e clique em "Selecionar":`);
+              displayProductList(results);
+              conversationState = 'CHOOSE_FROM_LIST';
+            }
+          } catch (err) {
+            console.error(err);
+            botSay('Erro ao consultar o servidor. Tente novamente mais tarde.');
+          }
+          break;
+
+        case 'CHOOSE_FROM_LIST':
+          const n = parseInt(input, 10);
+          if (!isNaN(n) && n > 0 && n <= lastFoundProducts.length) {
+            processProductSelection(lastFoundProducts[n - 1]);
+          } else {
+            botSay('Por favor, clique em "Selecionar" no produto desejado ou digite o número correto.');
+          }
+          break;
+
+        case 'CONFIRM_ORCAMENTO':
+          if (input.toLowerCase().startsWith('s')) {
+            botSay('Qual a forma de pagamento que prefere (Pix, Cartão, Boleto)?');
+            conversationState = 'GET_PAYMENT';
+          } else {
+            botSay('Sem problemas! Se precisar de outra peça, é só chamar.');
+            conversationState = 'GET_PRODUCT';
+          }
+          break;
+
+        case 'GET_PAYMENT':
+          const pagamento = input;
+          botSay(`Perfeito! Estou criando um bilhete para o vendedor...`);
+          try {
+            await createLead({
+              nome: userData.nome,
+              celular: userData.celular,
+              produto_busca: '',
+              produto_pn: userData.produto.PN_Alternativos || '',
+              produto_nome: userData.produto.Nome_Produto || '',
+              pagamento: pagamento,
+              status: 'Orçamento solicitado'
+            });
+            botSay(`Bilhete criado. Um vendedor entrará em contato pelo número ${userData.celular}.`);
+            displayFinalRemarks();
+            conversationState = 'ENDED';
+          } catch (err) {
+            console.error(err);
+            botSay('Erro ao criar bilhete. Tente novamente ou contate um vendedor.');
+          }
+          break;
+
+        case 'FORWARD_TO_SALES':
+          botSay(`Ok! Vou direcionar seu contato para um vendedor. Estou criando o bilhete...`);
+          try {
+            await createLead({
+              nome: userData.nome,
+              celular: userData.celular,
+              produto_busca: userData.produto.Nome_Produto || '',
+              produto_pn: userData.produto.PN_Alternativos || '',
+              produto_nome: userData.produto.Nome_Produto || '',
+              pagamento: '',
+              status: 'Solicitação - verificação de reposição'
+            });
+            botSay(`Pronto. Um vendedor entrará em contato pelo número ${userData.celular}.`);
+            displayFinalRemarks();
+            conversationState = 'ENDED';
+          } catch (err) {
+            console.error(err);
+            botSay('Erro ao criar bilhete. Tente novamente mais tarde.');
+          }
+          break;
+
+        default:
+          botSay('Se quiser continuar, diga o que precisa.');
+          conversationState = 'GET_PRODUCT';
+      }
+    }
+
+    chatForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (text) processInput(text);
     });
 
+    // inicia conversa
     botSay('Olá! Sou o assistente de vendas da MD TURBOS. Para começarmos, qual o seu nome?');
-
-</script>
+  </script>
 </body>
 </html>
